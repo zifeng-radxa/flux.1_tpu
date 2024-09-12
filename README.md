@@ -26,10 +26,11 @@ FLUX.1 [schnell/dev] models by Black Forest Labs: https://blackforestlabs.ai
     git clone https://github.com/zifeng-radxa/flux.1_tpu.git
     ```
 
-- Download models 
+- Download models from [ModelScope](https://modelscope.cn/models/tpu-mlir/FLUX.1_TPU) via [GLF](https://git-lfs.com/)
     ```bash
-    bash download_models.sh
-    tar -xvf models.tar.gz
+    cd flux.1_tpu
+    git clone https://modelscope.cn/models/tpu-mlir/FLUX.1_TPU
+    mv FLUX.1_TPU/ models/
     ```
 
 - Setup environments
