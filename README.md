@@ -26,7 +26,7 @@ FLUX.1 [schnell/dev] models by Black Forest Labs: https://blackforestlabs.ai
     git clone https://github.com/zifeng-radxa/flux.1_tpu.git
     ```
 
-- Download models from [ModelScope](https://modelscope.cn/models/tpu-mlir/FLUX.1_TPU) via [GLF](https://git-lfs.com/)
+- Download models from [ModelScope](https://modelscope.cn/models/tpu-mlir/FLUX.1_TPU) via [git LFS](https://git-lfs.com/)
     ```bash
     cd flux.1_tpu
     git clone https://www.modelscope.cn/tpu-mlir/FLUX.1_TPU.git
