@@ -637,7 +637,7 @@ if __name__ == '__main__':
     print(f'argv: {sys.argv}')
     description = "inference full flux pipline on sophon 2300x"
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('-m', '--models', choices=['dev', 'schnell'], required=True, help="models choices in ['dev', 'schnell']")
+    parser.add_argument('-m', '--models', choices=['dev', 'schnell'], required=True, help="model choices in ['dev', 'schnell']")
     parser.add_argument('-s','--steps', default=4, type=int, help='steps')
     parser.add_argument('-g','--gfc', default=0.0, type=float, help='guidance_scale')
     parser.add_argument('-r','--seed', default=None, type=int, help='random seed')
