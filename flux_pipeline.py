@@ -20,6 +20,7 @@ def seed_torch(seed=1029):
     torch.manual_seed(seed)
     print("set seed to:", seed)
 
+
 def make_torch2c(tensor: torch.Tensor):
     if not tensor.is_contiguous():
         print("may error")
@@ -82,7 +83,7 @@ class Builder:
         self.lib_flux_schnell_w4bf16()
         self.lib_clip()
         self.lib_vae()
-        self.lib_flux_multi_device()
+        self.lib_flux_schnell_multi_device()
         self.lib_flux_dev_w4bf16()
         self.lib_flux_dev_multi_device()
 
@@ -144,7 +145,7 @@ class Builder:
         self.lib.vae_decoder_free.argtypes = [vpoint]
         self.lib.vae_decoder_free.restype = int_
 
-    def lib_flux_multi_device(self):
+    def lib_flux_schnell_multi_device(self):
         # struct flux_schnell_device_3 * flux_schnell_multi_device_init(const char** filename, int* device_ids);
         self.lib.flux_schnell_multi_device_init.argtypes = [vpoint, vpoint]
         self.lib.flux_schnell_multi_device_init.restype = vpoint
@@ -253,6 +254,7 @@ class SchnellBmodel3:
         self.model = builder.lib.flux_schnell_multi_device_init(make2_c_string_list(self.paths),
                                                                 make2_c_int_list(self.devices))
 
+    # TODO:guidance as input is not neccessary
     def __call__(self, latents, timestep, guidance, pooled_prompt_embeds, prompt_embeds, rotary_emb, do_unpack=0):
         latents = latents.float()
         predict_noise = torch.zeros_like(latents)
@@ -273,15 +275,13 @@ class SchnellBmodel3:
     def __del__(self):
         self.builder.lib.flux_schnell_multi_device_free(self.model)
 
-    def __del__(self):
-        self.builder.lib.flux_schnell_multi_device_free(self.model)
-
 
 class SchnellBmodel:
     def __init__(self, path, device_id, return_dtype=torch.float32, builder=None):
         self.builder = builder
         self.model = builder.lib.flux_schnell_init(str2char_point(path), device_id)
 
+    # TODO:guidance not neccessay
     def __call__(self, latents, timestep, guidance, pooled_prompt_embeds, prompt_embeds, rotary_emb, do_unpack=0):
         latents = latents.float()
         predict_noise = torch.zeros_like(latents)
@@ -380,6 +380,7 @@ def build_dev(paths, device_ids, builder):
 
 
 class Vae_Decoder:
+    # TODO:self.h and self.w
     def __init__(self, path, device_id, batch=1, h=128, w=128, c=16, oc=3, oh=1024, ow=1024, return_dtype=torch.float32,
                  builder=None):
         self.builder = builder
@@ -456,7 +457,7 @@ def post_process(img):
 
 randn_tensor = lambda shape, dtype: torch.randn(shape, dtype=dtype)
 
-schedule_config = {
+schnell_schedule_config = {
     "base_image_seq_len": 256,
     "base_shift": 0.5,
     "max_image_seq_len": 4096,
@@ -464,6 +465,16 @@ schedule_config = {
     "num_train_timesteps": 1000,
     "shift": 1.0,
     "use_dynamic_shifting": False
+}
+
+dev_schedule_config = {
+    "base_image_seq_len": 256,
+    "base_shift": 0.5,
+    "max_image_seq_len": 4096,
+    "max_shift": 1.15,
+    "num_train_timesteps": 1000,
+    "shift": 3.0,
+    "use_dynamic_shifting": True
 }
 
 
@@ -484,14 +495,14 @@ class FluxSchnellPipeline:
         else:
             first_device_id = device_id[0]
         self.clip_pooling = Clip_Pooling_Encoder(clip_path, first_device_id, builder=builder)
-        self.t5 = T5Bmodel(t5_path, first_device_id, builder=builder)
+        self.t5 = T5Bmodel(t5_path, first_device_id, "", builder=builder)
         self.vae = Vae_Decoder(vae_path, first_device_id, builder=builder)
         self.flux_schnell = build_schnell(transform_path, device_id, builder=builder)
         self.tokenizer1 = CLIPTokenizer.from_pretrained(tokenizer1_path)
         self.tokenizer2 = T5TokenizerFast.from_pretrained(tokenizer2_path)
         self.rotary_emb = torch.load(rotary_emb_path, map_location="cpu")
         self.device_id = device_id
-        self.scheduler = FlowMatchEulerDiscreteScheduler(**schedule_config)
+        self.scheduler = FlowMatchEulerDiscreteScheduler(**schnell_schedule_config)
 
     def __call__(self, prompt, prompt2=None, guidance_scale=0.0, num_inference_steps=4, max_sequence_length=512,
                  generator=None):
@@ -520,10 +531,11 @@ class FluxSchnellPipeline:
         latents = randn_tensor((1, 16, 1024 // 8, 1024 // 8), torch.float32)
         latents = _pack_latents(latents, 1, 16, 128, 128)
         timesteps, num_inference_steps = get_timestep_and_steps(self.scheduler, num_inference_steps)
+        img_rotary_emb = self.rotary_emb
         for i in tqdm(range(num_inference_steps)):
             t = timesteps[i]
             predict = self.flux_schnell(latents, t, timesteps[i], clip_pooling_res, encoder_hidden_states,
-                                        self.rotary_emb)
+                                        img_rotary_emb)
             latents = self.scheduler.step(predict, t, latents, return_dict=False)[0]
         latents = _unpack_latents(latents, 1024, 1024, 16)
         img = self.vae(latents)
@@ -547,14 +559,14 @@ class FluxDevPipeline:
         else:
             first_device_id = device_id[0]
         self.clip_pooling = Clip_Pooling_Encoder(clip_path, first_device_id, builder=builder)
-        self.t5 = T5Bmodel(t5_path, first_device_id, builder=builder)
+        self.t5 = T5Bmodel(t5_path, first_device_id, "", builder=builder)
         self.vae = Vae_Decoder(vae_path, first_device_id, builder=builder)
         self.flux_dev = build_dev(transform_path, device_id, builder=builder)
         self.tokenizer1 = CLIPTokenizer.from_pretrained(tokenizer1_path)
         self.tokenizer2 = T5TokenizerFast.from_pretrained(tokenizer2_path)
         self.rotary_emb = torch.load(rotary_emb_path, map_location="cpu")
         self.device_id = device_id
-        self.scheduler = FlowMatchEulerDiscreteScheduler(**schedule_config)
+        self.scheduler = FlowMatchEulerDiscreteScheduler(**dev_schedule_config)
 
     def __call__(self, prompt, prompt2=None, guidance_scale=0.0, num_inference_steps=4, max_sequence_length=512,
                  generator=None):
@@ -583,11 +595,13 @@ class FluxDevPipeline:
         latents = randn_tensor((1, 16, 1024 // 8, 1024 // 8), torch.float32)
         latents = _pack_latents(latents, 1, 16, 128, 128)
         timesteps, num_inference_steps = get_timestep_and_steps(self.scheduler, num_inference_steps)
-        guidance_tensor = torch.tensor(guidance_scale)
+        timesteps, num_inference_steps = get_timestep_and_steps(self.scheduler, num_inference_steps)
+        guidance_tensor = torch.tensor(guidance_scale) * 1000
+        img_rotary_emb = self.rotary_emb
         for i in tqdm(range(num_inference_steps)):
             t = timesteps[i]
             predict = self.flux_dev(latents, t, guidance_tensor, clip_pooling_res, encoder_hidden_states,
-                                    self.rotary_emb)
+                                    img_rotary_emb)
             latents = self.scheduler.step(predict, t, latents, return_dict=False)[0]
         latents = _unpack_latents(latents, 1024, 1024, 16)
         img = self.vae(latents)

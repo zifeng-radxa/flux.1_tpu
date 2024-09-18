@@ -14,6 +14,20 @@
         } \
     } while (0)
 
+
+#define SAFE_FREE(MODEL_STRUCT) \
+    do { \
+        bool cur_flag = true; \
+        if (MODEL_STRUCT) { \
+            if (MODEL_STRUCT->handle){ \
+                cur_flag = false; \
+            } \
+        } \
+        if(cur_flag){  \
+            return 0; \
+        } \
+    } while (0)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

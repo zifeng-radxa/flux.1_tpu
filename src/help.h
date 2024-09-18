@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define SHOW_TIME_DEBUG 0
+#define SHOW_TIME_DEBUG 1
 #define loop(x, n) for (int x = 0; x < n; x++) 
 #define loops(x, n, s) for (int x = 0; x <= n-s; x+=s)
 #define FUNC_TIME_START \
