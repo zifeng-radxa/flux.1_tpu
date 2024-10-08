@@ -6,3 +6,4 @@ diffusers==0.30.2
 transformers==4.44.2
 sentencepiece==0.2.0
 protobuf==5.28.1
+gradio==4.44.1

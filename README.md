@@ -44,28 +44,35 @@ FLUX.1 [schnell/dev] models by Black Forest Labs: https://blackforestlabs.ai
     cmake .. && make -j
     ```
 
+
 - Run inference
+  - gradio
     ```bash
-    # schnell
-    python3 flux_pipeline.py --models schnell
-    # dev
-    python3 flux_pipeline.py -m dev -s 28
+    python3 gr.py
     ```
-    `flux_pipeline.py` parameters
-    ```bash
-    usage: flux_pipeline.py [-h] -m {dev,schnell} [-s STEPS] [-g GFC] [-r SEED]
+    Access the Airbox IP address on port 8999 via a browser
+  - or CLI
+      ```bash
+      # schnell
+      python3 flux_pipeline.py --models schnell
+      # dev
+      python3 flux_pipeline.py -m dev -s 28
+      ```
+      `flux_pipeline.py` parameters
+      ```bash
+      usage: flux_pipeline.py [-h] -m {dev,schnell} [-s STEPS] [-g GFC] [-r SEED]
     
-    inference full flux pipline on sophon 2300x
+      inference full flux pipline on sophon 2300x
     
-    optional arguments:
-      -h, --help            show this help message and exit
-      -m {dev,schnell}, --models {dev,schnell} model choices in ['dev', 'schnell']
-      -s STEPS, --steps STEPS steps
-      -g GFC, --gfc GFC     guidance_scale
-      -r SEED, --seed SEED  random seed
-    ```
+      optional arguments:
+        -h, --help            show this help message and exit
+        -m {dev,schnell}, --models {dev,schnell} model choices in ['dev', 'schnell']
+        -s STEPS, --steps STEPS steps
+        -g GFC, --gfc GFC     guidance_scale
+        -r SEED, --seed SEED  random seed
+      ```
 ---
 
 ## TODO
 - Fix o3 compile segmentation fault
-- Add gradio demo
+- ~~Add gradio demo~~
