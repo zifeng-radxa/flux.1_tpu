@@ -113,7 +113,7 @@ int clip_pooling_run(struct clip_pooling *encoder, void* input_tokens, void* poo
 
 int clip_pooling_free(struct clip_pooling *encoder)
 {
-    SAFE_FREE(encoder);
+    // SAFE_FREE(encoder);
     bm_free_device(encoder->handle, encoder->input_tokens);
     bm_free_device(encoder->handle, encoder->hidden);
     bm_free_device(encoder->handle, encoder->pooling_embed);

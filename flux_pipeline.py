@@ -13,12 +13,20 @@ from transformers import CLIPTokenizer, T5TokenizerFast
 
 
 def seed_torch(seed=1029):
-    seed=seed%4294967296
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)  # 为了禁止hash随机化，使得实验可复现
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    print("set seed to:", seed)
+    if seed == -1:
+        if 'PYTHONHASHSEED' in os.environ:
+            del os.environ['PYTHONHASHSEED']
+            random.seed(None)
+            np.random.seed(None)
+            torch.seed()
+            return
+    else:
+        seed = seed%4294967296
+        random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)  # 为了禁止hash随机化，使得实验可复现
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        print("set seed to:", seed)
 
 
 def make_torch2c(tensor: torch.Tensor):
@@ -653,7 +661,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-m', '--models', choices=['dev', 'schnell'], required=True, help="model choices in ['dev', 'schnell']")
     parser.add_argument('-s','--steps', default=4, type=int, help='steps')
-    parser.add_argument('-g','--gfc', default=0.0, type=float, help='guidance_scale')
+    parser.add_argument('-g','--cfg', default=0.0, type=float, help='guidance_scale')
     parser.add_argument('-r','--seed', default=None, type=int, help='random seed')
 
     args = parser.parse_args()
