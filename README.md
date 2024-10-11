@@ -68,7 +68,7 @@ FLUX.1 [schnell/dev] models by Black Forest Labs: https://blackforestlabs.ai
         -h, --help            show this help message and exit
         -m {dev,schnell}, --models {dev,schnell} model choices in ['dev', 'schnell']
         -s STEPS, --steps STEPS steps
-        -g GFC, --gfc GFC     guidance_scale
+        -g CFG, --cfg CFG     guidance_scale
         -r SEED, --seed SEED  random seed
       ```
 ---
